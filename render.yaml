@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: face-attendance-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      # Encrypts stored face templates. Render will ask you to set this once; keep a
+      # copy somewhere safe - losing or changing it makes existing enrolments unreadable.
+      - key: EMBEDDING_ENCRYPTION_KEY
+        sync: false
+      # Neon/Supabase connection string, e.g. postgresql+psycopg://user:pass@host/db
+      - key: DATABASE_URL
+        sync: false
+      # Your deployed Vercel frontend origin(s), comma-separated, no trailing slash.
+      - key: CORS_ORIGINS
+        sync: false

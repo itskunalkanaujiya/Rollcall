@@ -1,0 +1,102 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Colour tokens. Status colours carry meaning only (present / late / absent) - never decoration. */
+:root {
+  --bg: #edf1f2;
+  --surface: #ffffff;
+  --surface-2: #f5f8f9;
+  --ink: #12262f;
+  --muted: #566b74;
+  --line: #d3dde1;
+  --brand: #14506b;
+  --brand-strong: #0e3d52;
+  --on-brand: #ffffff;
+  --rail: #0e2a36;
+  --rail-ink: #cfe0e6;
+  --rail-active: #1b4456;
+  --present: #1b7f53;
+  --present-bg: #e1f3ea;
+  --late: #9a6412;
+  --late-bg: #fbefd5;
+  --absent: #b43a27;
+  --absent-bg: #fbe4df;
+  --info: #285fb8;
+  --info-bg: #e3ecfa;
+  --focus: #1b7ba6;
+}
+.dark {
+  --bg: #091820;
+  --surface: #11242d;
+  --surface-2: #163039;
+  --ink: #e6eef1;
+  --muted: #93a8b1;
+  --line: #243b46;
+  --brand: #6fc0df;
+  --brand-strong: #8fd0ea;
+  --on-brand: #06222d;
+  --rail: #071319;
+  --rail-ink: #a9c0c9;
+  --rail-active: #14303b;
+  --present: #5bd199;
+  --present-bg: #12392b;
+  --late: #f0b755;
+  --late-bg: #3a2c10;
+  --absent: #ff8c78;
+  --absent-bg: #43201a;
+  --info: #8db4f2;
+  --info-bg: #17284a;
+  --focus: #6fc0df;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-on-brand: var(--on-brand);
+  --color-rail: var(--rail);
+  --color-rail-ink: var(--rail-ink);
+  --color-rail-active: var(--rail-active);
+  --color-present: var(--present);
+  --color-present-bg: var(--present-bg);
+  --color-late: var(--late);
+  --color-late-bg: var(--late-bg);
+  --color-absent: var(--absent);
+  --color-absent-bg: var(--absent-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --font-display: "Bricolage Grotesque Variable", "IBM Plex Sans", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+button:disabled { cursor: not-allowed; }
+
+/* Scanner reticle: four corners whose colour reflects the current state. */
+.reticle { --c: rgba(255,255,255,.85); }
+.reticle[data-tone="ok"] { --c: #5bd199; }
+.reticle[data-tone="warn"] { --c: #f0b755; }
+.reticle[data-tone="bad"] { --c: #ff8c78; }
+.reticle[data-tone="busy"] { --c: #8fd0ea; }
+.reticle i { position: absolute; width: 11%; aspect-ratio: 1; border: 4px solid var(--c); transition: border-color .2s; }
+.reticle i:nth-child(1) { top: 7%; left: 12%; border-right: 0; border-bottom: 0; border-radius: 14px 0 0 0; }
+.reticle i:nth-child(2) { top: 7%; right: 12%; border-left: 0; border-bottom: 0; border-radius: 0 14px 0 0; }
+.reticle i:nth-child(3) { bottom: 7%; left: 12%; border-right: 0; border-top: 0; border-radius: 0 0 0 14px; }
+.reticle i:nth-child(4) { bottom: 7%; right: 12%; border-left: 0; border-top: 0; border-radius: 0 0 14px 0; }
+.sweep { animation: sweep 1.6s ease-in-out infinite; }
+@keyframes sweep { 0% { top: 12%; opacity: 0; } 15% { opacity: .9; } 85% { opacity: .9; } 100% { top: 86%; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sweep { animation: none; opacity: 0; } * { scroll-behavior: auto !important; } }
