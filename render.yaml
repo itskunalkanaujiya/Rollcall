@@ -20,6 +20,7 @@ services:
       # Neon/Supabase connection string, e.g. postgresql+psycopg://user:pass@host/db
       - key: DATABASE_URL
         sync: false
-      # Your deployed Vercel frontend origin(s), comma-separated, no trailing slash.
+      # The frontend is served by this same service (single origin), so set this to this
+      # service's own URL once Render assigns it, e.g. https://face-attendance-backend.onrender.com
       - key: CORS_ORIGINS
         sync: false

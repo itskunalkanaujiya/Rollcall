@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from app.api.v1 import api_router
 from app.core import errors
@@ -17,6 +19,10 @@ from app.services.face_detection import ModelUnavailableError
 from app.services.face_recognition import get_engine
 
 log = logging.getLogger("app")
+
+# Populated by the Docker build (frontend built into backend/static). Absent in local dev,
+# where the Vite dev server serves the frontend instead.
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 @asynccontextmanager
@@ -56,6 +62,14 @@ def create_app() -> FastAPI:
         eng = get_engine()
         return {"status": "ok", "model_loaded": eng.is_loaded, "model_error": eng.info.error,
                 "environment": s.environment}
+
+    if STATIC_DIR.is_dir():
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def spa(full_path: str) -> FileResponse:
+            candidate = STATIC_DIR / full_path
+            if full_path and candidate.is_file():
+                return FileResponse(candidate)
+            return FileResponse(STATIC_DIR / "index.html")  # client-side routes (React Router)
 
     return app
 
