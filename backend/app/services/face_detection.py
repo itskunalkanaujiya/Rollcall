@@ -13,6 +13,19 @@ log = logging.getLogger("app.face")
 
 DETECTOR_FILE = "det_10g.onnx"
 
+# InsightFace model packs this app knows how to use, and the two files it actually needs from
+# each (it never loads the landmark/gender-age models bundled alongside them). buffalo_s trades
+# some accuracy for a recognizer ~13x smaller (13MB vs 174MB) - the difference between fitting
+# in a 512MB host and not.
+MODEL_PACK_FILES = {
+    "buffalo_l": {"detector": "det_10g.onnx", "recognizer": "w600k_r50.onnx"},
+    "buffalo_s": {"detector": "det_500m.onnx", "recognizer": "w600k_mbf.onnx"},
+}
+
+
+def pack_files(model_name: str) -> dict[str, str]:
+    return MODEL_PACK_FILES.get(model_name, MODEL_PACK_FILES["buffalo_l"])
+
 
 class ModelUnavailableError(RuntimeError):
     """Raised when the face model files are missing or cannot be loaded."""
@@ -125,8 +138,9 @@ def assess_quality(img: np.ndarray, face: DetectedFace, *, min_size: int, min_sc
 class FaceDetector:
     """Wraps the SCRFD ONNX detector. Loaded once; call from a single inference thread."""
 
-    def __init__(self, model_dir: Path, det_size: int, providers: list[str]) -> None:
-        path = model_dir / DETECTOR_FILE
+    def __init__(self, model_dir: Path, det_size: int, providers: list[str],
+                 detector_file: str = DETECTOR_FILE) -> None:
+        path = model_dir / detector_file
         if not path.exists():
             raise ModelUnavailableError(f"Detector model not found: {path}")
         try:

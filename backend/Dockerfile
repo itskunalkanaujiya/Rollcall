@@ -22,10 +22,13 @@ WORKDIR /app
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir --timeout 120 --retries 10 -r backend/requirements.txt
 
-# Model weights - ~300MB, rarely changes, cached independently of app code so
-# ordinary code deploys don't re-download it.
+# Model weights - rarely changes, cached independently of app code so ordinary code deploys
+# don't re-download it. buffalo_s (not buffalo_l): small enough to run on a 512MB host; see
+# app/services/face_detection.py MODEL_PACK_FILES for the accuracy/memory trade-off this makes.
 COPY scripts/download_model.py scripts/download_model.py
-RUN python scripts/download_model.py && rm -f /app/backend/data/insightface/buffalo_l.zip
+RUN python scripts/download_model.py --name buffalo_s \
+    && cd /app/backend/data/insightface/buffalo_s \
+    && rm -f ../buffalo_s.zip 1k3d68.onnx genderage.onnx 2d106det.onnx
 
 # App code last - this is what changes on every deploy.
 COPY backend/alembic backend/alembic
@@ -37,7 +40,8 @@ WORKDIR /app/backend
 # MALLOC_ARENA_MAX=1: glibc's allocator keeps a memory arena per thread and rarely gives
 # freed memory back to the OS, which inflates RSS well past what the app actually uses -
 # a known issue for numpy/opencv/onnxruntime in small containers. One arena avoids that.
-ENV PYTHONUNBUFFERED=1 ENVIRONMENT=production LOAD_MODEL_ON_STARTUP=true MALLOC_ARENA_MAX=1
+ENV PYTHONUNBUFFERED=1 ENVIRONMENT=production LOAD_MODEL_ON_STARTUP=true MALLOC_ARENA_MAX=1 \
+    MODEL_NAME=buffalo_s
 
 EXPOSE 8000
 CMD ["/bin/sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

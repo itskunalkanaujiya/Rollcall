@@ -11,7 +11,9 @@ from pathlib import Path
 import numpy as np
 
 from app.core.config import Settings, get_settings
-from app.services.face_detection import DetectedFace, FaceDetector, ModelUnavailableError, low_memory_session_options
+from app.services.face_detection import (
+    DetectedFace, FaceDetector, ModelUnavailableError, low_memory_session_options, pack_files,
+)
 
 log = logging.getLogger("app.face")
 
@@ -32,8 +34,8 @@ def l2_normalize(v: np.ndarray) -> np.ndarray:
 
 
 class FaceEmbedder:
-    def __init__(self, model_dir: Path, providers: list[str]) -> None:
-        path = model_dir / RECOGNIZER_FILE
+    def __init__(self, model_dir: Path, providers: list[str], recognizer_file: str = RECOGNIZER_FILE) -> None:
+        path = model_dir / recognizer_file
         if not path.exists():
             raise ModelUnavailableError(f"Recognition model not found: {path}")
         try:
@@ -110,9 +112,11 @@ class FaceEngine:
             self.info = EngineInfo(False, self.settings.model_name, requested, [], self.settings.detection_size, msg, notes)
             raise ModelUnavailableError(msg)
         t0 = time.perf_counter()
+        files = pack_files(self.settings.model_name)
         try:
-            self.detector = FaceDetector(self.model_dir, self.settings.detection_size, providers)
-            self.embedder = FaceEmbedder(self.model_dir, providers)
+            self.detector = FaceDetector(self.model_dir, self.settings.detection_size, providers,
+                                         detector_file=files["detector"])
+            self.embedder = FaceEmbedder(self.model_dir, providers, recognizer_file=files["recognizer"])
         except ModelUnavailableError as exc:
             self.detector = self.embedder = None
             msg = f"{exc}. {DOWNLOAD_HELP}"

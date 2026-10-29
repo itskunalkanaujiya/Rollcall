@@ -18,9 +18,17 @@ import zipfile
 from pathlib import Path
 
 URL = "https://github.com/deepinsight/insightface/releases/download/v0.7/{name}.zip"
-REQUIRED = ["det_10g.onnx", "w600k_r50.onnx"]
-# SHA-256 of the buffalo_l.zip release asset as downloaded on 2026-10-27.
-KNOWN_SHA256 = {"buffalo_l": "80ffe37d8a5940d59a7384c201a2a38d4741f2f3c51eef46ebb28218a7b0ca2f"}
+# The two files this app actually loads from each pack (see app/services/face_detection.py
+# MODEL_PACK_FILES - keep these in sync). buffalo_s is ~13x smaller for memory-constrained hosts.
+PACK_REQUIRED = {
+    "buffalo_l": ["det_10g.onnx", "w600k_r50.onnx"],
+    "buffalo_s": ["det_500m.onnx", "w600k_mbf.onnx"],
+}
+# SHA-256 of each {name}.zip release asset, as downloaded on the date noted.
+KNOWN_SHA256 = {
+    "buffalo_l": "80ffe37d8a5940d59a7384c201a2a38d4741f2f3c51eef46ebb28218a7b0ca2f",  # 2026-10-27
+    "buffalo_s": "d85a87f503f691807cd8bb97128bdf7a0660326cd9cd02657127fa978bab8b5e",  # 2026-10-29
+}
 ROOT = Path(__file__).resolve().parents[1] / "backend" / "data" / "insightface"
 
 
@@ -47,9 +55,10 @@ def main() -> int:
     ap.add_argument("--from-zip", type=Path, help="use an already downloaded zip")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
+    required = PACK_REQUIRED.get(a.name, PACK_REQUIRED["buffalo_l"])
 
     dest = ROOT / a.name
-    if all((dest / f).exists() for f in REQUIRED) and not a.force:
+    if all((dest / f).exists() for f in required) and not a.force:
         print(f"Model already installed at {dest}")
         return 0
     dest.mkdir(parents=True, exist_ok=True)
@@ -72,7 +81,7 @@ def main() -> int:
             return 2
     with zipfile.ZipFile(zpath) as zf:
         safe_extract(zf, dest)
-    missing = [f for f in REQUIRED if not (dest / f).exists()]
+    missing = [f for f in required if not (dest / f).exists()]
     if missing:
         print(f"Archive did not contain required files: {missing}", file=sys.stderr)
         return 3
