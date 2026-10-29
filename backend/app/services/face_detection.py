@@ -18,6 +18,19 @@ class ModelUnavailableError(RuntimeError):
     """Raised when the face model files are missing or cannot be loaded."""
 
 
+def low_memory_session_options():
+    """Single-threaded, no memory arena - keeps ONNX Runtime's footprint small enough
+    for a 512MB host (e.g. Render's free tier). Costs a little latency, not accuracy."""
+    import onnxruntime as ort
+    so = ort.SessionOptions()
+    so.intra_op_num_threads = 1
+    so.inter_op_num_threads = 1
+    so.enable_cpu_mem_arena = False
+    so.enable_mem_pattern = False
+    so.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+    return so
+
+
 @dataclass
 class DetectedFace:
     bbox: np.ndarray            # [x1, y1, x2, y2] in the (possibly downscaled) frame
@@ -118,7 +131,7 @@ class FaceDetector:
             raise ModelUnavailableError(f"Detector model not found: {path}")
         try:
             from insightface.model_zoo import get_model
-            self._model = get_model(str(path), providers=providers)
+            self._model = get_model(str(path), providers=providers, sess_options=low_memory_session_options())
             self._model.prepare(ctx_id=-1 if providers == ["CPUExecutionProvider"] else 0,
                                 input_size=(det_size, det_size), det_thresh=0.4)
         except Exception as exc:  # noqa: BLE001 - surface any loader failure clearly

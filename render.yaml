@@ -11,6 +11,10 @@ services:
         value: production
       - key: COOKIE_SECURE
         value: "true"
+      # Smaller than the 640 default - the free plan's 512MB RAM is tight for the face
+      # model; this trims memory/CPU with only a small drop in small-face detection range.
+      - key: DETECTION_SIZE
+        value: "320"
       - key: SECRET_KEY
         generateValue: true
       # Encrypts stored face templates. Render will ask you to set this once; keep a

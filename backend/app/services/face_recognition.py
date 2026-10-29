@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from app.core.config import Settings, get_settings
-from app.services.face_detection import DetectedFace, FaceDetector, ModelUnavailableError
+from app.services.face_detection import DetectedFace, FaceDetector, ModelUnavailableError, low_memory_session_options
 
 log = logging.getLogger("app.face")
 
@@ -38,7 +38,7 @@ class FaceEmbedder:
             raise ModelUnavailableError(f"Recognition model not found: {path}")
         try:
             from insightface.model_zoo import get_model
-            self._model = get_model(str(path), providers=providers)
+            self._model = get_model(str(path), providers=providers, sess_options=low_memory_session_options())
         except Exception as exc:  # noqa: BLE001
             raise ModelUnavailableError(f"Failed to load recognition model {path}: {exc}") from exc
         if getattr(self._model, "taskname", None) != "recognition":
