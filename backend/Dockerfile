@@ -34,7 +34,10 @@ COPY backend/app backend/app
 COPY --from=frontend-build /app/frontend/dist backend/static
 
 WORKDIR /app/backend
-ENV PYTHONUNBUFFERED=1 ENVIRONMENT=production LOAD_MODEL_ON_STARTUP=true
+# MALLOC_ARENA_MAX=1: glibc's allocator keeps a memory arena per thread and rarely gives
+# freed memory back to the OS, which inflates RSS well past what the app actually uses -
+# a known issue for numpy/opencv/onnxruntime in small containers. One arena avoids that.
+ENV PYTHONUNBUFFERED=1 ENVIRONMENT=production LOAD_MODEL_ON_STARTUP=true MALLOC_ARENA_MAX=1
 
 EXPOSE 8000
 CMD ["/bin/sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
